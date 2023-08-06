@@ -1,15 +1,14 @@
 package main
 
 import (
-	"context"
 	"log"
 
 	"go.temporal.io/sdk/client"
 
-	"github.com/captain-corgi/go-temporal-example-01/internal/momo/model"
-	"github.com/captain-corgi/go-temporal-example-01/internal/momo/workflow"
+	"github.com/captain-corgi/go-temporal-example-01/internal/momo"
 )
 
+// main function represent transport layer
 func main() {
 	// Create the client object just once per process
 	c, err := client.Dial(client.Options{})
@@ -18,32 +17,9 @@ func main() {
 	}
 	defer c.Close()
 
-	// Prepare data
-	var (
-		input = model.PaymentDetails{
-			SourceAccount: "85-150",
-			TargetAccount: "43-812",
-			Amount:        250,
-			ReferenceID:   "12345",
-		}
-		options = client.StartWorkflowOptions{
-			ID:        "pay-invoice-701",
-			TaskQueue: model.MoneyTransferTaskQueueName,
-		}
-		result string
-	)
-	log.Printf("Starting transfer from account %s to account %s for %d", input.SourceAccount, input.TargetAccount, input.Amount)
-
-	// Execute workflow
-	we, err := c.ExecuteWorkflow(context.Background(), options, workflow.MoneyTransfer, input)
-	if err != nil {
-		log.Fatalln("Unable to start the Workflow:", err)
+	// Execute each usecases
+	momoTasks := momo.NewExecuter(c)
+	if err := momoTasks.TransferMoney(); err != nil {
+		log.Fatalln(err)
 	}
-	log.Printf("WorkflowID: %s RunID: %s\n", we.GetID(), we.GetRunID())
-
-	// Get result
-	if err = we.Get(context.Background(), &result); err != nil {
-		log.Fatalln("Unable to get Workflow result:", err)
-	}
-	log.Println(result)
 }
