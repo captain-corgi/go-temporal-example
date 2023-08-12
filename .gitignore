@@ -19,3 +19,4 @@ money-transfer-project-template-go/
 
 # IDE dirs
 .idea/
+.vscode/
